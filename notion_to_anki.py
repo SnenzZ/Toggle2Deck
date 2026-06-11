@@ -25,6 +25,8 @@ from bs4.element import NavigableString, Tag
 
 
 FIELD_SEPARATOR = "\x1f"
+MODEL_NAME = "Notion Toggle Basic Centered"
+MODEL_ID_SEED = "model:notion-toggle-basic:centered-large-images-v2"
 CSS = """
 .card {
   font-family: Arial, sans-serif;
@@ -32,18 +34,33 @@ CSS = """
   line-height: 1.45;
   color: #222;
   background: #fff;
-  text-align: left;
+  text-align: center;
 }
 .front {
-  font-size: 21px;
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.front {
+  font-size: 24px;
   font-weight: 600;
 }
+.back {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
 .back img {
-  max-width: 100%;
-  height: auto;
+  display: block;
+  width: 100% !important;
+  max-width: 1100px !important;
+  height: auto !important;
+  margin: 0.8em auto;
 }
 .back figure {
-  margin: 0.8em 0;
+  margin: 1em auto;
+  text-align: center;
 }
 .back ul,
 .back ol {
@@ -258,12 +275,16 @@ def clean_class(value: object, *, add: str) -> list[str]:
 
 
 def merge_image_style(style: str | None) -> str:
-    parts = [part.strip() for part in (style or "").split(";") if part.strip()]
-    lowered = {part.split(":", 1)[0].strip().lower() for part in parts if ":" in part}
-    if "max-width" not in lowered:
-        parts.append("max-width:100%")
-    if "height" not in lowered:
-        parts.append("height:auto")
+    blocked = {"width", "max-width", "min-width", "height", "max-height", "min-height"}
+    parts = []
+    for part in (style or "").split(";"):
+        part = part.strip()
+        if not part or ":" not in part:
+            continue
+        key = part.split(":", 1)[0].strip().lower()
+        if key not in blocked:
+            parts.append(part)
+    parts.extend(["width:100%", "max-width:1100px", "height:auto"])
     return ";".join(parts)
 
 
@@ -294,7 +315,7 @@ def write_with_genanki(
 
         model = genanki.Model(
             model_id,
-            "Notion Toggle Basic",
+            MODEL_NAME,
             fields=[{"name": "Front"}, {"name": "Back"}],
             templates=[
                 {
@@ -517,7 +538,7 @@ def insert_collection(
     models = {
         str(model_id): {
             "id": model_id,
-            "name": "Notion Toggle Basic",
+            "name": MODEL_NAME,
             "type": 0,
             "mod": now,
             "usn": -1,
@@ -679,7 +700,7 @@ def convert_html_export(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     deck_id = deterministic_id(f"deck:{final_deck_name}")
-    model_id = deterministic_id("model:notion-toggle-basic")
+    model_id = deterministic_id(MODEL_ID_SEED)
     used_genanki = False
     if use_genanki:
         used_genanki = write_with_genanki(

@@ -23,13 +23,53 @@ python app.py
 Open:
 
 ```text
-http://127.0.0.1:8765
+http://127.0.0.1:10000
 ```
 
 Upload a `.zip` file that contains exactly one Notion `.html` export and the
 matching media folder. Nested ZIP files are supported, for example a ZIP that
 contains another ZIP with the actual Notion export inside. The browser downloads
 the generated `.apkg` after the conversion.
+
+To use another local port:
+
+```powershell
+python app.py --port 8765
+```
+
+## Deploy on Render Free
+
+This project is ready for Render as a Python Web Service. The app uses Render's
+ephemeral filesystem only for temporary upload extraction and APKG generation;
+files are deleted after the download response is closed. Nothing is designed to
+be stored permanently on the server.
+
+1. Push this folder to a GitHub repository.
+2. In Render, create a new Blueprint from the repository.
+3. Render will read `render.yaml` automatically.
+4. Deploy the service.
+
+The included `render.yaml` uses:
+
+```yaml
+services:
+  - type: web
+    name: notion-to-anki
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --timeout 300
+```
+
+You can also create the service manually with:
+
+```text
+Build Command: pip install -r requirements.txt
+Start Command: gunicorn app:app --bind 0.0.0.0:$PORT --timeout 300
+```
+
+Render provides the `PORT` environment variable. Locally, `python app.py`
+defaults to port `10000` and host `0.0.0.0`.
 
 ## CLI quick start
 
@@ -77,6 +117,12 @@ Required:
 
 ```powershell
 pip install beautifulsoup4 Flask
+```
+
+Required for production deployment:
+
+```powershell
+pip install gunicorn
 ```
 
 Optional:

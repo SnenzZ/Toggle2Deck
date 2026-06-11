@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import tempfile
 import zipfile
@@ -152,8 +153,8 @@ def error_response(message: str, status: int) -> tuple[str, int]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the local Notion-to-Anki web UI.")
-    parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 10000)))
     parser.add_argument("--debug", action="store_true")
     return parser.parse_args()
 

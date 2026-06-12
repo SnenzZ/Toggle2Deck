@@ -1,214 +1,102 @@
 <!doctype html>
 <html lang="de">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Notion to Anki</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f6f7f9;
-      --panel: #ffffff;
-      --text: #1f2933;
-      --muted: #5d6775;
-      --line: #d9dee7;
-      --accent: #146c62;
-      --accent-dark: #0f514a;
-      --danger: #b42318;
-      --danger-bg: #fff1f0;
-      --focus: #77b7ff;
-    }
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Notion to Anki</title>
 
-    * {
-      box-sizing: border-box;
-    }
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+        <link
+            rel="icon"
+            type="image/svg+xml"
+            href="{{ url_for('static', filename='flavicon.svg') }}"
+        />
+    </head>
+    <body>
+        <main>
+            <section class="tool" aria-labelledby="title">
+                <header class="tool-header">
+                    <p class="eyebrow">Notion Export Converter</p>
+                    <h1 id="title">Notion to Anki</h1>
+                    <p class="intro">
+                        Upload your Notion HTML export as a ZIP and create an
+                        Anki deck from it.
+                    </p>
+                </header>
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--text);
-      background:
-        linear-gradient(180deg, #eef2f6 0%, var(--bg) 36%),
-        var(--bg);
-    }
+                <form
+                    action="/convert"
+                    method="post"
+                    enctype="multipart/form-data"
+                >
+                    <input
+                        id="fileInput"
+                        name="zip_file"
+                        type="file"
+                        accept=".zip,application/zip"
+                        hidden
+                        required
+                    />
 
-    main {
-      width: min(760px, calc(100vw - 32px));
-      margin: 0 auto;
-      padding: 48px 0;
-    }
+                    <div id="uploadZone" class="upload-zone">
+                        <div class="upload-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                                <path
+                                    d="M12 3v11m0-11 4 4m-4-4-4 4M5 14v4a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-4"
+                                />
+                            </svg>
+                        </div>
 
-    .tool {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: 0 18px 45px rgba(31, 41, 51, 0.08);
-      overflow: hidden;
-    }
+                        <div class="upload-text">Upload ZIP</div>
 
-    header {
-      padding: 28px 30px 18px;
-      border-bottom: 1px solid var(--line);
-    }
+                        <div class="upload-hint">
+                            Click or drag ZIP file here
+                        </div>
+                    </div>
 
-    h1 {
-      margin: 0;
-      font-size: 28px;
-      line-height: 1.15;
-      font-weight: 700;
-      letter-spacing: 0;
-    }
+                    <div id="fileListContainer" class="file-list hidden">
+                        <div class="file-list-header">
+                            <span id="fileCount" class="file-count"></span>
 
-    form {
-      display: grid;
-      gap: 22px;
-      padding: 28px 30px 30px;
-    }
+                            <button
+                                type="button"
+                                id="clearAll"
+                                class="clear-all"
+                            >
+                                Delete
+                            </button>
+                        </div>
 
-    label {
-      display: grid;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 700;
-    }
+                        <div id="fileList"></div>
+                    </div>
 
-    input[type="text"],
-    input[type="file"] {
-      width: 100%;
-      min-height: 46px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: #fff;
-      color: var(--text);
-      font: inherit;
-    }
+                    <label>
+                        Deck Name
+                        <input
+                            name="deck_name"
+                            type="text"
+                            placeholder="Import titles from Notion"
+                        />
+                    </label>
 
-    input[type="text"] {
-      padding: 0 13px;
-    }
+                    {% if error %}
+                    <p class="error" role="alert">{{ error }}</p>
+                    {% endif %}
 
-    input[type="file"] {
-      padding: 10px;
-    }
+                    <div class="actions">
+                        <button type="submit">Create APKG</button>
+                    </div>
+                </form>
 
-    input:focus-visible,
-    button:focus-visible {
-      outline: 3px solid var(--focus);
-      outline-offset: 2px;
-    }
-
-    .actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 12px;
-      padding-top: 4px;
-    }
-
-    button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      min-height: 46px;
-      padding: 0 18px;
-      border: 0;
-      border-radius: 6px;
-      background: var(--accent);
-      color: #fff;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: var(--accent-dark);
-    }
-
-    .icon {
-      width: 18px;
-      height: 18px;
-      flex: 0 0 auto;
-    }
-
-    .error {
-      margin: 0 30px;
-      padding: 12px 14px;
-      border: 1px solid #ffb4ab;
-      border-radius: 6px;
-      background: var(--danger-bg);
-      color: var(--danger);
-      font-size: 14px;
-      line-height: 1.4;
-    }
-
-    footer {
-      padding: 0 30px 26px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    @media (max-width: 560px) {
-      main {
-        width: min(100vw - 20px, 760px);
-        padding: 20px 0;
-      }
-
-      header,
-      form,
-      footer {
-        padding-left: 18px;
-        padding-right: 18px;
-      }
-
-      .actions {
-        justify-content: stretch;
-      }
-
-      button {
-        width: 100%;
-      }
-    }
-  </style>
-</head>
-<body>
-  <main>
-    <section class="tool" aria-labelledby="title">
-      <header>
-        <h1 id="title">Notion to Anki</h1>
-      </header>
-
-      <form action="/convert" method="post" enctype="multipart/form-data">
-        <label>
-          ZIP-Datei
-          <input name="zip_file" type="file" accept=".zip,application/zip" required>
-        </label>
-
-        <label>
-          Deckname
-          <input name="deck_name" type="text" placeholder="Aus Notion-Titel uebernehmen">
-        </label>
-
-        {% if error %}
-          <p class="error" role="alert">{{ error }}</p>
-        {% endif %}
-
-        <div class="actions">
-          <button type="submit">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="currentColor" d="M5 20h14v-2H5v2Zm7-16-5 5h3v5h4V9h3l-5-5Z"/>
-            </svg>
-            APKG erstellen
-          </button>
-        </div>
-      </form>
-
-      <footer>
-        ZIP mit einer Notion-HTML-Datei und dem zugehoerigen Medienordner. Verschachtelte ZIP-Dateien werden automatisch entpackt.
-      </footer>
-    </section>
-  </main>
-</body>
+                <footer>
+                    Expected is a ZIP file with exactly one Notion HTML file and
+                    the associated media folder.
+                </footer>
+            </section>
+        </main>
+        <script src="{{ url_for('static', filename='app.js') }}"></script>
+    </body>
 </html>

@@ -33,29 +33,45 @@ CSS = """
   font-size: 18px;
   line-height: 1.45;
   color: #222;
-  background: #fff;
+  background: #f3f5f7;
   text-align: center;
+  padding: 18px;
 }
 .front {
-  max-width: 980px;
-  margin-left: auto;
-  margin-right: auto;
-}
-.front {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 26px 30px;
+  border: 1px solid #d8dee6;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(20, 27, 36, 0.14);
+  background: #fff;
   font-size: 24px;
   font-weight: 600;
 }
+.answered-front .front {
+  max-width: 780px;
+  padding: 14px 20px;
+  font-size: 19px;
+  line-height: 1.35;
+  box-shadow: 0 6px 18px rgba(20, 27, 36, 0.1);
+}
 .back {
-  max-width: 1100px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px 30px;
+  border: 1px solid #d8dee6;
+  border-radius: 8px;
+  box-shadow: 0 14px 36px rgba(20, 27, 36, 0.16);
+  background: #fff;
   text-align: left;
 }
 .back img {
   display: block;
-  width: 100% !important;
-  max-width: 1100px !important;
+  width: auto !important;
+  max-width: min(100%, 760px) !important;
+  max-height: 58vh !important;
   height: auto !important;
+  object-fit: contain;
   margin: 0.8em auto;
 }
 .back figure {
@@ -68,6 +84,32 @@ CSS = """
 }
 .back details {
   margin: 0.45em 0;
+}
+#answer {
+  max-width: 760px;
+  margin: 16px auto;
+  border: 0;
+  border-top: 1px solid #d0d7df;
+}
+@media (max-width: 640px) {
+  .card {
+    padding: 10px;
+  }
+  .front,
+  .back {
+    padding: 18px 16px;
+  }
+  .front {
+    font-size: 21px;
+  }
+  .answered-front .front {
+    padding: 12px 14px;
+    font-size: 18px;
+  }
+  .back img {
+    max-width: 100% !important;
+    max-height: 48vh !important;
+  }
 }
 """.strip()
 
@@ -284,7 +326,7 @@ def merge_image_style(style: str | None) -> str:
         key = part.split(":", 1)[0].strip().lower()
         if key not in blocked:
             parts.append(part)
-    parts.extend(["width:100%", "max-width:1100px", "height:auto"])
+    parts.extend(["width:auto", "max-width:100%", "max-height:58vh", "height:auto"])
     return ";".join(parts)
 
 
@@ -321,7 +363,7 @@ def write_with_genanki(
                 {
                     "name": "Card 1",
                     "qfmt": "{{Front}}",
-                    "afmt": '{{FrontSide}}<hr id="answer">{{Back}}',
+                    "afmt": '<div class="answered-front">{{FrontSide}}</div><hr id="answer">{{Back}}',
                 }
             ],
             css=CSS,
@@ -556,7 +598,7 @@ def insert_collection(
                     "name": "Card 1",
                     "ord": 0,
                     "qfmt": "{{Front}}",
-                    "afmt": '{{FrontSide}}<hr id="answer">{{Back}}',
+                    "afmt": '<div class="answered-front">{{FrontSide}}</div><hr id="answer">{{Back}}',
                     "did": None,
                     "bqfmt": "",
                     "bafmt": "",

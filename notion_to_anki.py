@@ -251,6 +251,9 @@ def detect_media_dir(html_path: Path, soup: BeautifulSoup) -> Path | None:
 def extract_cards(soup: BeautifulSoup, resolver: MediaResolver) -> list[CardData]:
     cards: list[CardData] = []
     for details in soup.find_all("details"):
+        if details.find_parent("details") is not None:
+            continue
+
         summary = details.find("summary", recursive=False)
         if summary is None:
             continue

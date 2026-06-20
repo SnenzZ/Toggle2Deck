@@ -5,7 +5,7 @@ Basic Anki card:
 
 - toggle title -> card front
 - toggle body -> card back
-- nested toggles -> their own cards, while still appearing inside parent backs
+- nested toggles -> remain inside parent backs without creating extra cards
 - formatting, lists, links, and local images are preserved
 - exported media files are bundled into the `.apkg`
 
@@ -136,8 +136,9 @@ the script can write a valid Anki package by itself.
 
 ## Notes
 
-- The parser reads every `<details><summary>...</summary>...</details>` block,
-  which is how Notion exports toggles.
+- The parser reads top-level `<details><summary>...</summary>...</details>`
+  blocks, which is how Notion exports toggles. Nested toggles stay in the
+  parent card body but do not become separate Anki cards.
 - Image references such as `media-folder/image%201.png` are resolved from the
   HTML location and the exported media folder.
 - Local image names are simplified only when Anki would dislike the original

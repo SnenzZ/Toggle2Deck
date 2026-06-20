@@ -38,6 +38,7 @@ def convert() -> Response:
         return error_response("Die Datei muss eine .zip-Datei sein.", 400)
 
     deck_name = (request.form.get("deck_name") or "").strip() or None
+    include_nested_toggles = request.form.get("include_nested_toggles") == "on"
     temp_dir = Path(tempfile.mkdtemp(prefix="notion-web-upload-"))
     zip_path = temp_dir / "upload.zip"
     extract_dir = temp_dir / "extracted"
@@ -56,6 +57,7 @@ def convert() -> Response:
             output_path,
             deck_name=deck_name,
             use_genanki=True,
+            include_nested_toggles=include_nested_toggles,
         )
     except Exception as exc:
         shutil.rmtree(temp_dir, ignore_errors=True)

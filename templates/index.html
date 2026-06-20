@@ -82,6 +82,22 @@
                         />
                     </label>
 
+                    <label class="switch-row">
+                        <input
+                            name="include_nested_toggles"
+                            type="checkbox"
+                        />
+                        <span class="switch" aria-hidden="true"></span>
+                        <span class="switch-copy">
+                            <span class="switch-title">
+                                Untertoggles als eigene Karten erstellen
+                            </span>
+                            <span class="switch-description">
+                                Ausgeschaltet bleiben sie nur in der Hauptkarte.
+                            </span>
+                        </span>
+                    </label>
+
                     {% if error %}
                     <p class="error" role="alert">{{ error }}</p>
                     {% endif %}

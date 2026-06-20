@@ -248,10 +248,15 @@ def detect_media_dir(html_path: Path, soup: BeautifulSoup) -> Path | None:
     return None
 
 
-def extract_cards(soup: BeautifulSoup, resolver: MediaResolver) -> list[CardData]:
+def extract_cards(
+    soup: BeautifulSoup,
+    resolver: MediaResolver,
+    *,
+    include_nested_toggles: bool = False,
+) -> list[CardData]:
     cards: list[CardData] = []
     for details in soup.find_all("details"):
-        if details.find_parent("details") is not None:
+        if not include_nested_toggles and details.find_parent("details") is not None:
             continue
 
         summary = details.find("summary", recursive=False)
@@ -728,6 +733,7 @@ def convert_html_export(
     media_dir: Path | None = None,
     deck_name: str | None = None,
     use_genanki: bool = True,
+    include_nested_toggles: bool = False,
 ) -> ConversionResult:
     html_path = html_path.resolve()
     if not html_path.is_file():
@@ -739,7 +745,11 @@ def convert_html_export(
     output_path = output_path.resolve()
 
     resolver = MediaResolver(html_path, detected_media_dir)
-    cards = extract_cards(soup, resolver)
+    cards = extract_cards(
+        soup,
+        resolver,
+        include_nested_toggles=include_nested_toggles,
+    )
     if not cards:
         raise ValueError("No Notion toggle blocks were found.")
 

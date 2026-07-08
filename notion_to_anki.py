@@ -26,14 +26,28 @@ from bs4.element import NavigableString, Tag
 
 FIELD_SEPARATOR = "\x1f"
 MODEL_NAME = "Notion Toggle Basic Centered"
-MODEL_ID_SEED = "model:notion-toggle-basic:centered-large-images-v2"
+MODEL_ID_SEED = "model:notion-toggle-basic:centered-large-images-v3-dark-mode"
 CSS = """
 .card {
+  --page-bg: #f3f5f7;
+  --panel-bg: #fff;
+  --text: #222;
+  --border: #d8dee6;
+  --answer-line: #d0d7df;
+  --front-shadow: rgba(20, 27, 36, 0.14);
+  --answered-front-shadow: rgba(20, 27, 36, 0.1);
+  --back-shadow: rgba(20, 27, 36, 0.16);
+  --link: #0b6d99;
+  --link-visited: #6d4ca8;
+  --code-bg: #eef2f5;
+  --code-text: #17212b;
+
+  color-scheme: light dark;
   font-family: Arial, sans-serif;
   font-size: 18px;
   line-height: 1.45;
-  color: #222;
-  background: #f3f5f7;
+  color: var(--text);
+  background: var(--page-bg);
   text-align: center;
   padding: 18px;
 }
@@ -41,10 +55,10 @@ CSS = """
   max-width: 900px;
   margin: 0 auto;
   padding: 26px 30px;
-  border: 1px solid #d8dee6;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 12px 32px rgba(20, 27, 36, 0.14);
-  background: #fff;
+  box-shadow: 0 12px 32px var(--front-shadow);
+  background: var(--panel-bg);
   font-size: 24px;
   font-weight: 600;
 }
@@ -53,17 +67,41 @@ CSS = """
   padding: 14px 20px;
   font-size: 19px;
   line-height: 1.35;
-  box-shadow: 0 6px 18px rgba(20, 27, 36, 0.1);
+  box-shadow: 0 6px 18px var(--answered-front-shadow);
 }
 .back {
   max-width: 980px;
   margin: 0 auto;
   padding: 24px 30px;
-  border: 1px solid #d8dee6;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 14px 36px rgba(20, 27, 36, 0.16);
-  background: #fff;
+  box-shadow: 0 14px 36px var(--back-shadow);
+  background: var(--panel-bg);
   text-align: left;
+}
+.front,
+.back {
+  color: var(--text);
+}
+.back a {
+  color: var(--link);
+}
+.back a:visited {
+  color: var(--link-visited);
+}
+.back code,
+.back pre {
+  background: var(--code-bg);
+  color: var(--code-text);
+}
+.back code {
+  border-radius: 4px;
+  padding: 0.1em 0.25em;
+}
+.back pre {
+  border-radius: 6px;
+  overflow-x: auto;
+  padding: 0.8em 1em;
 }
 .back img {
   display: block;
@@ -89,7 +127,38 @@ CSS = """
   max-width: 760px;
   margin: 16px auto;
   border: 0;
-  border-top: 1px solid #d0d7df;
+  border-top: 1px solid var(--answer-line);
+}
+.nightMode.card,
+.nightMode .card {
+  --page-bg: #11161c;
+  --panel-bg: #1b222b;
+  --text: #e7ebf0;
+  --border: #35404c;
+  --answer-line: #414d5a;
+  --front-shadow: rgba(0, 0, 0, 0.36);
+  --answered-front-shadow: rgba(0, 0, 0, 0.26);
+  --back-shadow: rgba(0, 0, 0, 0.4);
+  --link: #8ccfff;
+  --link-visited: #c4a7ff;
+  --code-bg: #252e38;
+  --code-text: #f0f3f7;
+}
+@media (prefers-color-scheme: dark) {
+  .card {
+    --page-bg: #11161c;
+    --panel-bg: #1b222b;
+    --text: #e7ebf0;
+    --border: #35404c;
+    --answer-line: #414d5a;
+    --front-shadow: rgba(0, 0, 0, 0.36);
+    --answered-front-shadow: rgba(0, 0, 0, 0.26);
+    --back-shadow: rgba(0, 0, 0, 0.4);
+    --link: #8ccfff;
+    --link-visited: #c4a7ff;
+    --code-bg: #252e38;
+    --code-text: #f0f3f7;
+  }
 }
 @media (max-width: 640px) {
   .card {

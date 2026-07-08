@@ -7,6 +7,7 @@ Basic Anki card:
 - toggle body -> card back
 - nested toggles -> remain inside parent backs without creating extra cards
 - formatting, lists, links, and local images are preserved
+- generated cards support Anki's light and dark mode
 - exported media files are bundled into the `.apkg`
 
 The tool prefers `genanki` when it is installed, but also includes a built-in APKG

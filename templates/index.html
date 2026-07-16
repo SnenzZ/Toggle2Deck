@@ -82,6 +82,25 @@
                         />
                     </label>
 
+                    <section id="colorControls" class="color-controls hidden" aria-labelledby="colorTitle">
+                        <div class="color-heading">
+                            <div>
+                                <h2 id="colorTitle">Kartenfarben</h2>
+                                <p>Die globale Farbe gilt für alle Karten, sofern keine eigene Farbe aktiviert ist.</p>
+                            </div>
+                            <label class="global-color">
+                                Globale Farbe
+                                <input id="globalColor" name="global_color" type="color" value="#4f8f87" />
+                            </label>
+                        </div>
+
+                        <details class="card-editor">
+                            <summary><span>Alle Karten</span><span id="cardCount"></span></summary>
+                            <div id="cardRows" class="card-rows"></div>
+                        </details>
+                        <input id="cardColors" name="card_colors" type="hidden" value="{}" />
+                    </section>
+
                     <label class="switch-row">
                         <input
                             name="include_nested_toggles"
@@ -103,7 +122,7 @@
                     {% endif %}
 
                     <div class="actions">
-                        <button type="submit">Create APKG</button>
+                        <button id="submitButton" type="submit">Create APKG</button>
                     </div>
                 </form>
 

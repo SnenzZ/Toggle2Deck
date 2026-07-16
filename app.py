@@ -4,15 +4,25 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import tempfile
 import zipfile
 from pathlib import Path
 
-from flask import Flask, Response, render_template, request, send_file
+from flask import Flask, Response, jsonify, render_template, request, send_file
+from bs4 import BeautifulSoup
 
-from notion_to_anki import convert_html_export, safe_filename
+from notion_to_anki import (
+    DEFAULT_CARD_COLOR,
+    MediaResolver,
+    convert_html_export,
+    extract_cards,
+    normalize_color,
+    safe_filename,
+    text_content,
+)
 
 
 APP_ROOT = Path(__file__).resolve().parent
@@ -39,6 +49,7 @@ def convert() -> Response:
 
     deck_name = (request.form.get("deck_name") or "").strip() or None
     include_nested_toggles = request.form.get("include_nested_toggles") == "on"
+    global_color = normalize_color(request.form.get("global_color"), DEFAULT_CARD_COLOR)
     temp_dir = Path(tempfile.mkdtemp(prefix="notion-web-upload-"))
     zip_path = temp_dir / "upload.zip"
     extract_dir = temp_dir / "extracted"
@@ -47,6 +58,7 @@ def convert() -> Response:
     output_dir.mkdir()
 
     try:
+        card_colors = parse_card_colors(request.form.get("card_colors"))
         upload.save(zip_path)
         extract_export_zip(zip_path, extract_dir)
         html_path = find_single_html_file(extract_dir)
@@ -58,6 +70,8 @@ def convert() -> Response:
             deck_name=deck_name,
             use_genanki=True,
             include_nested_toggles=include_nested_toggles,
+            global_color=global_color,
+            card_colors=card_colors,
         )
     except Exception as exc:
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -76,6 +90,57 @@ def convert() -> Response:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
     return response
+
+
+@app.post("/preview")
+def preview() -> Response:
+    """Parse the upload without persisting it and return card fronts for editing."""
+    upload = request.files.get("zip_file")
+    if upload is None or not upload.filename or not upload.filename.lower().endswith(".zip"):
+        return jsonify({"error": "Bitte eine ZIP-Datei auswählen."}), 400
+
+    temp_dir = Path(tempfile.mkdtemp(prefix="notion-web-preview-"))
+    try:
+        zip_path = temp_dir / "upload.zip"
+        extract_dir = temp_dir / "extracted"
+        extract_dir.mkdir()
+        upload.save(zip_path)
+        extract_export_zip(zip_path, extract_dir)
+        html_path = find_single_html_file(extract_dir)
+        soup = BeautifulSoup(html_path.read_text(encoding="utf-8"), "html.parser")
+        resolver = MediaResolver(html_path, None)
+        cards = extract_cards(
+            soup,
+            resolver,
+            include_nested_toggles=request.form.get("include_nested_toggles") == "on",
+        )
+        return jsonify({"cards": [{"index": i, "front": text_content(card.front)} for i, card in enumerate(cards)]})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 400
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+def parse_card_colors(raw_value: str | None) -> dict[int, str]:
+    if not raw_value:
+        return {}
+    try:
+        payload = json.loads(raw_value)
+    except (TypeError, json.JSONDecodeError):
+        raise ValueError("Ungültige Kartenfarben.")
+    if not isinstance(payload, dict):
+        raise ValueError("Ungültige Kartenfarben.")
+    result: dict[int, str] = {}
+    for raw_index, raw_color in payload.items():
+        try:
+            index = int(raw_index)
+        except (TypeError, ValueError):
+            continue
+        if index >= 0 and isinstance(raw_color, str):
+            normalized = normalize_color(raw_color, "")
+            if normalized:
+                result[index] = normalized
+    return result
 
 
 def extract_export_zip(zip_path: Path, target_dir: Path) -> None:

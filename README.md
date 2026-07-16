@@ -7,6 +7,7 @@ Basic Anki card:
 - toggle body -> card back
 - nested toggles -> remain inside parent backs without creating extra cards
 - formatting, lists, links, and local images are preserved
+- one global card color plus optional per-card color overrides
 - generated cards support Anki's light and dark mode
 - exported media files are bundled into the `.apkg`
 
@@ -30,7 +31,9 @@ http://127.0.0.1:10000
 Upload a `.zip` file that contains exactly one Notion `.html` export and the
 matching media folder. Nested ZIP files are supported, for example a ZIP that
 contains another ZIP with the actual Notion export inside. The browser downloads
-the generated `.apkg` after the conversion.
+the generated `.apkg` after the conversion. After selecting the ZIP, choose a
+global color and optionally expand **All cards** to override the color of
+individual cards. Per-card colors take precedence over the global color.
 
 To use another local port:
 

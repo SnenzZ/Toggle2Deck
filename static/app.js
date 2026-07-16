@@ -5,6 +5,14 @@ const fileList = document.getElementById("fileList");
 const fileListContainer = document.getElementById("fileListContainer");
 const fileCount = document.getElementById("fileCount");
 const clearAll = document.getElementById("clearAll");
+const form = document.querySelector("form");
+const colorControls = document.getElementById("colorControls");
+const globalColor = document.getElementById("globalColor");
+const cardRows = document.getElementById("cardRows");
+const cardCount = document.getElementById("cardCount");
+const cardColors = document.getElementById("cardColors");
+const nestedToggle = form.elements.include_nested_toggles;
+let previewRequest = 0;
 
 uploadZone.addEventListener("click", () => {
   fileInput.click();
@@ -54,6 +62,7 @@ function setFile(file) {
   fileInput.files = transfer.files;
 
   renderFile(file);
+  loadPreview();
 }
 
 function renderFile(file) {
@@ -100,6 +109,87 @@ function createFileItem(file) {
 function clearFile() {
   fileInput.value = "";
   renderFile(null);
+  colorControls.classList.add("hidden");
+  cardRows.replaceChildren();
+  cardColors.value = "{}";
+}
+
+nestedToggle.addEventListener("change", () => {
+  if (fileInput.files[0]) loadPreview();
+});
+
+async function loadPreview() {
+  const requestId = ++previewRequest;
+  colorControls.classList.add("hidden");
+  const data = new FormData();
+  data.append("zip_file", fileInput.files[0]);
+  if (nestedToggle.checked) data.append("include_nested_toggles", "on");
+
+  try {
+    const response = await fetch("/preview", { method: "POST", body: data });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "Vorschau konnte nicht geladen werden.");
+    if (requestId !== previewRequest) return;
+    renderCards(payload.cards);
+  } catch (error) {
+    if (requestId === previewRequest) alert(error.message);
+  }
+}
+
+function renderCards(cards) {
+  cardRows.replaceChildren();
+  cardCount.textContent = `${cards.length} Karten`;
+  for (const card of cards) cardRows.append(createCardRow(card));
+  cardColors.value = "{}";
+  colorControls.classList.remove("hidden");
+}
+
+function createCardRow(card) {
+  const row = document.createElement("div");
+  row.className = "card-row";
+  row.dataset.index = card.index;
+
+  const front = document.createElement("div");
+  front.className = "card-front";
+  front.textContent = card.front || "(Leere Vorderseite)";
+
+  const overrideLabel = document.createElement("label");
+  overrideLabel.className = "override-color";
+  const override = document.createElement("input");
+  override.type = "checkbox";
+  override.setAttribute("aria-label", `Eigene Farbe für Karte ${card.index + 1}`);
+  const picker = document.createElement("input");
+  picker.type = "color";
+  picker.value = globalColor.value;
+  picker.disabled = true;
+  picker.setAttribute("aria-label", `Farbe für Karte ${card.index + 1}`);
+  const copy = document.createElement("span");
+  copy.textContent = "Eigene Farbe";
+  overrideLabel.append(override, copy, picker);
+
+  override.addEventListener("change", () => {
+    picker.disabled = !override.checked;
+    updateCardColors();
+  });
+  picker.addEventListener("input", updateCardColors);
+  row.append(front, overrideLabel);
+  return row;
+}
+
+globalColor.addEventListener("input", () => {
+  for (const row of cardRows.children) {
+    const override = row.querySelector('input[type="checkbox"]');
+    if (!override.checked) row.querySelector('input[type="color"]').value = globalColor.value;
+  }
+});
+
+function updateCardColors() {
+  const values = {};
+  for (const row of cardRows.children) {
+    const override = row.querySelector('input[type="checkbox"]');
+    if (override.checked) values[row.dataset.index] = row.querySelector('input[type="color"]').value;
+  }
+  cardColors.value = JSON.stringify(values);
 }
 
 function formatFileSize(bytes) {

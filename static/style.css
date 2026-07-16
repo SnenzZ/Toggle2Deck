@@ -102,6 +102,45 @@ input[type="text"] {
     font: inherit;
 }
 
+input[type="color"] {
+    width: 52px;
+    height: 40px;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.color-controls {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel-soft);
+}
+
+.color-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.color-heading h2 { margin: 0; font-size: 18px; }
+.color-heading p { margin: 5px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.global-color { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+
+.card-editor { border-top: 1px solid var(--line); padding-top: 12px; }
+.card-editor > summary { display: flex; justify-content: space-between; gap: 12px; color: var(--text); font-weight: 750; cursor: pointer; }
+.card-rows { display: grid; gap: 8px; margin-top: 12px; max-height: 420px; overflow-y: auto; }
+.card-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.card-front { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-size: 14px; }
+.override-color { display: flex; grid-template-columns: none; flex-direction: row; align-items: center; gap: 7px; font-size: 12px; white-space: nowrap; }
+.override-color input[type="color"] { width: 38px; height: 32px; }
+.override-color input[type="color"]:disabled { opacity: .38; cursor: default; }
+
 input[type="checkbox"] {
     accent-color: var(--accent);
 }
@@ -352,7 +391,7 @@ footer {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 @media (max-width: 560px) {
@@ -388,6 +427,10 @@ footer {
     .upload-zone {
         padding: 30px 14px;
     }
+
+    .color-heading, .card-row { align-items: stretch; grid-template-columns: 1fr; }
+    .color-heading { flex-direction: column; }
+    .global-color { justify-content: space-between; }
 
     .file-item,
     .file-list-header {

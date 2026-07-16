@@ -26,161 +26,134 @@ from bs4.element import NavigableString, Tag
 
 FIELD_SEPARATOR = "\x1f"
 MODEL_NAME = "Notion Toggle Basic Centered"
-MODEL_ID_SEED = "model:notion-toggle-basic:centered-large-images-v3-dark-mode"
+MODEL_ID_SEED = "model:notion-toggle-basic:antiarrhythmika-design-v5"
+DEFAULT_CARD_COLOR = "#4f8f87"
+COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 CSS = """
 .card {
-  --page-bg: #f3f5f7;
-  --panel-bg: #fff;
-  --text: #222;
-  --border: #d8dee6;
-  --answer-line: #d0d7df;
-  --front-shadow: rgba(20, 27, 36, 0.14);
-  --answered-front-shadow: rgba(20, 27, 36, 0.1);
-  --back-shadow: rgba(20, 27, 36, 0.16);
-  --link: #0b6d99;
-  --link-visited: #6d4ca8;
-  --code-bg: #eef2f5;
-  --code-text: #17212b;
-
-  color-scheme: light dark;
-  font-family: Arial, sans-serif;
-  font-size: 18px;
-  line-height: 1.45;
-  color: var(--text);
-  background: var(--page-bg);
-  text-align: center;
-  padding: 18px;
-}
-.front {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 26px 30px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 12px 32px var(--front-shadow);
-  background: var(--panel-bg);
-  font-size: 24px;
-  font-weight: 600;
-}
-.answered-front .front {
-  max-width: 780px;
-  padding: 14px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-size: 19px;
-  line-height: 1.35;
-  box-shadow: 0 6px 18px var(--answered-front-shadow);
-}
-.back {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 24px 30px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 14px 36px var(--back-shadow);
-  background: var(--panel-bg);
+  line-height: 1.48;
   text-align: left;
+  color: #243043;
+  background: #eef2f7;
+  margin: 0;
+  padding: 20px;
 }
-.front,
-.back {
-  color: var(--text);
+.card-theme {
+  --accent: #4f8f87;
+  max-width: 760px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(23, 35, 58, 0.12);
+  overflow: hidden;
+  padding: 0 24px 24px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
-.back a {
-  color: var(--link);
+.topbar {
+  height: 9px;
+  background: var(--accent);
+  margin: 0 -24px 18px;
 }
-.back a:visited {
-  color: var(--link-visited);
+.badge {
+  display: inline-block;
+  padding: 6px 11px;
+  border-radius: 999px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  font-weight: 750;
+  font-size: 13px;
+  letter-spacing: .02em;
+  margin-bottom: 16px;
 }
-.back code,
-.back pre {
-  background: var(--code-bg);
-  color: var(--code-text);
+.label {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  margin-bottom: 7px;
 }
-.back code {
-  border-radius: 4px;
-  padding: 0.1em 0.25em;
+.question {
+  font-size: 25px;
+  font-weight: 750;
+  line-height: 1.32;
+  color: #172033;
 }
-.back pre {
-  border-radius: 6px;
-  overflow-x: auto;
-  padding: 0.8em 1em;
+.question.compact {
+  font-size: 19px;
+  font-weight: 650;
 }
-.back img {
+.hint {
+  margin-top: 28px;
+  color: #8490a3;
+  font-size: 13px;
+  text-align: center;
+}
+.front, .back { color: inherit; }
+.answer { color: #273449; }
+.answer b { color: var(--accent); }
+.answer a { color: var(--accent); }
+.answer ul, .answer ol { padding-left: 1.25em; margin: .55em 0; }
+.answer li { margin: .34em 0; }
+.answer code, .answer pre { background: #eef2f5; color: #17212b; border-radius: 6px; }
+.answer code { padding: .1em .25em; }
+.answer pre { overflow-x: auto; padding: .8em 1em; }
+.answer img {
   display: block;
   width: auto !important;
-  max-width: min(100%, 760px) !important;
+  max-width: 100% !important;
   max-height: 58vh !important;
   height: auto !important;
   object-fit: contain;
-  margin: 0.8em auto;
-}
-.back figure {
-  margin: 1em auto;
-  text-align: center;
-}
-.back ul,
-.back ol {
-  padding-left: 1.5em;
-}
-.back details {
-  margin: 0.45em 0;
+  margin: 12px auto 5px;
+  padding: 6px;
+  box-sizing: border-box;
+  border: 1px solid #d9e0ea;
+  border-radius: 12px;
+  background: #fff;
 }
 #answer {
-  max-width: 760px;
-  margin: 16px auto;
   border: 0;
-  border-top: 1px solid var(--answer-line);
+  height: 1px;
+  background: #dfe5ee;
+  margin: 22px 0;
 }
-.nightMode.card,
-.nightMode .card {
-  --page-bg: #11161c;
-  --panel-bg: #1b222b;
-  --text: #e7ebf0;
-  --border: #35404c;
-  --answer-line: #414d5a;
-  --front-shadow: rgba(0, 0, 0, 0.36);
-  --answered-front-shadow: rgba(0, 0, 0, 0.26);
-  --back-shadow: rgba(0, 0, 0, 0.4);
-  --link: #8ccfff;
-  --link-visited: #c4a7ff;
-  --code-bg: #252e38;
-  --code-text: #f0f3f7;
-}
-@media (prefers-color-scheme: dark) {
-  .card {
-    --page-bg: #11161c;
-    --panel-bg: #1b222b;
-    --text: #e7ebf0;
-    --border: #35404c;
-    --answer-line: #414d5a;
-    --front-shadow: rgba(0, 0, 0, 0.36);
-    --answered-front-shadow: rgba(0, 0, 0, 0.26);
-    --back-shadow: rgba(0, 0, 0, 0.4);
-    --link: #8ccfff;
-    --link-visited: #c4a7ff;
-    --code-bg: #252e38;
-    --code-text: #f0f3f7;
-  }
-}
+.nightMode.card, .card.nightMode { color: #e8edf6; background: #121722; }
+.nightMode .card-theme, .card.nightMode .card-theme { background: #1c2432; border-color: #303b4d; box-shadow: none; }
+.nightMode .question, .card.nightMode .question { color: #f5f7fb; }
+.nightMode .answer, .card.nightMode .answer { color: #e1e7f0; }
+.nightMode #answer, .card.nightMode #answer { background: #394456; }
+.nightMode .badge, .card.nightMode .badge { background: rgba(255,255,255,.06); }
+.nightMode .answer code, .nightMode .answer pre { background: #252e38; color: #f0f3f7; }
+sub, sup { line-height: 0; }
 @media (max-width: 640px) {
-  .card {
-    padding: 10px;
-  }
-  .front,
-  .back {
-    padding: 18px 16px;
-  }
-  .front {
-    font-size: 21px;
-  }
-  .answered-front .front {
-    padding: 12px 14px;
-    font-size: 18px;
-  }
-  .back img {
-    max-width: 100% !important;
-    max-height: 48vh !important;
-  }
+  .card { padding: 10px; }
+  .card-theme { padding: 0 16px 18px; }
+  .topbar { margin-left: -16px; margin-right: -16px; }
+  .question { font-size: 22px; }
+  .question.compact { font-size: 18px; }
+  .answer img { max-height: 48vh !important; }
 }
 """.strip()
+
+QFMT = '''<div class="card-theme" style="--accent: {{Color}};">
+  <div class="topbar"></div>
+  <div class="badge">LERNKARTE</div>
+  <div class="label">FRAGE</div>
+  <div class="question">{{Front}}</div>
+  <div class="hint">Antwort anzeigen</div>
+</div>'''
+
+AFMT = '''<div class="card-theme" style="--accent: {{Color}};">
+  <div class="topbar"></div>
+  <div class="badge">LERNKARTE</div>
+  <div class="label">FRAGE</div>
+  <div class="question compact">{{Front}}</div>
+  <hr id="answer">
+  <div class="label">ANTWORT</div>
+  <div class="answer">{{Back}}</div>
+</div>'''
 
 
 @dataclass
@@ -194,6 +167,14 @@ class CardData:
     front: str
     back: str
     source_id: str | None = None
+    color: str = DEFAULT_CARD_COLOR
+
+
+def normalize_color(value: str | None, fallback: str = DEFAULT_CARD_COLOR) -> str:
+    """Return a CSS-safe, normalized six-digit hex color."""
+    if value and COLOR_RE.fullmatch(value.strip()):
+        return value.strip().lower()
+    return fallback
 
 
 @dataclass
@@ -435,19 +416,19 @@ def write_with_genanki(
         model = genanki.Model(
             model_id,
             MODEL_NAME,
-            fields=[{"name": "Front"}, {"name": "Back"}],
+            fields=[{"name": "Front"}, {"name": "Back"}, {"name": "Color"}],
             templates=[
                 {
                     "name": "Card 1",
-                    "qfmt": "{{Front}}",
-                    "afmt": '<div class="answered-front">{{FrontSide}}</div><hr id="answer">{{Back}}',
+                    "qfmt": QFMT,
+                    "afmt": AFMT,
                 }
             ],
             css=CSS,
         )
         deck = genanki.Deck(deck_id, deck_name)
         for card in cards:
-            deck.add_note(genanki.Note(model=model, fields=[card.front, card.back]))
+            deck.add_note(genanki.Note(model=model, fields=[card.front, card.back, card.color]))
 
         package = genanki.Package(deck)
         package.media_files = media_files
@@ -669,13 +650,14 @@ def insert_collection(
             "flds": [
                 field_def("Front", 0),
                 field_def("Back", 1),
+                field_def("Color", 2),
             ],
             "tmpls": [
                 {
                     "name": "Card 1",
                     "ord": 0,
-                    "qfmt": "{{Front}}",
-                    "afmt": '<div class="answered-front">{{FrontSide}}</div><hr id="answer">{{Back}}',
+                    "qfmt": QFMT,
+                    "afmt": AFMT,
                     "did": None,
                     "bqfmt": "",
                     "bafmt": "",
@@ -740,7 +722,7 @@ def insert_cards(
                 now,
                 -1,
                 "",
-                f"{card.front}{FIELD_SEPARATOR}{card.back}",
+                f"{card.front}{FIELD_SEPARATOR}{card.back}{FIELD_SEPARATOR}{card.color}",
                 front_text,
                 checksum(front_text),
                 0,
@@ -803,6 +785,8 @@ def convert_html_export(
     deck_name: str | None = None,
     use_genanki: bool = True,
     include_nested_toggles: bool = False,
+    global_color: str = DEFAULT_CARD_COLOR,
+    card_colors: dict[int, str] | None = None,
 ) -> ConversionResult:
     html_path = html_path.resolve()
     if not html_path.is_file():
@@ -821,6 +805,11 @@ def convert_html_export(
     )
     if not cards:
         raise ValueError("No Notion toggle blocks were found.")
+
+    global_color = normalize_color(global_color)
+    card_colors = card_colors or {}
+    for index, card in enumerate(cards):
+        card.color = normalize_color(card_colors.get(index), global_color)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     deck_id = deterministic_id(f"deck:{final_deck_name}")

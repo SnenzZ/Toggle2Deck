@@ -26,7 +26,7 @@ from bs4.element import NavigableString, Tag
 
 FIELD_SEPARATOR = "\x1f"
 MODEL_NAME = "Notion Toggle Basic Centered"
-MODEL_ID_SEED = "model:notion-toggle-basic:antiarrhythmika-design-v5"
+MODEL_ID_SEED = "model:notion-toggle-basic:antiarrhythmika-design-v6-deck-title"
 DEFAULT_CARD_COLOR = "#4f8f87"
 COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 CSS = """
@@ -139,7 +139,7 @@ sub, sup { line-height: 0; }
 
 QFMT = '''<div class="card-theme" style="--accent: {{Color}};">
   <div class="topbar"></div>
-  <div class="badge">LERNKARTE</div>
+  <div class="badge">{{DeckTitle}}</div>
   <div class="label">FRAGE</div>
   <div class="question">{{Front}}</div>
   <div class="hint">Antwort anzeigen</div>
@@ -147,7 +147,7 @@ QFMT = '''<div class="card-theme" style="--accent: {{Color}};">
 
 AFMT = '''<div class="card-theme" style="--accent: {{Color}};">
   <div class="topbar"></div>
-  <div class="badge">LERNKARTE</div>
+  <div class="badge">{{DeckTitle}}</div>
   <div class="label">FRAGE</div>
   <div class="question compact">{{Front}}</div>
   <hr id="answer">
@@ -416,7 +416,12 @@ def write_with_genanki(
         model = genanki.Model(
             model_id,
             MODEL_NAME,
-            fields=[{"name": "Front"}, {"name": "Back"}, {"name": "Color"}],
+            fields=[
+                {"name": "Front"},
+                {"name": "Back"},
+                {"name": "Color"},
+                {"name": "DeckTitle"},
+            ],
             templates=[
                 {
                     "name": "Card 1",
@@ -428,7 +433,12 @@ def write_with_genanki(
         )
         deck = genanki.Deck(deck_id, deck_name)
         for card in cards:
-            deck.add_note(genanki.Note(model=model, fields=[card.front, card.back, card.color]))
+            deck.add_note(
+                genanki.Note(
+                    model=model,
+                    fields=[card.front, card.back, card.color, deck_name],
+                )
+            )
 
         package = genanki.Package(deck)
         package.media_files = media_files
@@ -456,7 +466,7 @@ def write_builtin_apkg(
         try:
             create_schema(conn)
             insert_collection(conn, deck_name, deck_id, model_id, now)
-            insert_cards(conn, cards, deck_id, model_id, now, base_id)
+            insert_cards(conn, cards, deck_name, deck_id, model_id, now, base_id)
             conn.commit()
         finally:
             conn.close()
@@ -651,6 +661,7 @@ def insert_collection(
                 field_def("Front", 0),
                 field_def("Back", 1),
                 field_def("Color", 2),
+                field_def("DeckTitle", 3),
             ],
             "tmpls": [
                 {
@@ -701,6 +712,7 @@ def field_def(name: str, ord_value: int) -> dict[str, object]:
 def insert_cards(
     conn: sqlite3.Connection,
     cards: list[CardData],
+    deck_name: str,
     deck_id: int,
     model_id: int,
     now: int,
@@ -722,7 +734,9 @@ def insert_cards(
                 now,
                 -1,
                 "",
-                f"{card.front}{FIELD_SEPARATOR}{card.back}{FIELD_SEPARATOR}{card.color}",
+                FIELD_SEPARATOR.join(
+                    [card.front, card.back, card.color, deck_name]
+                ),
                 front_text,
                 checksum(front_text),
                 0,

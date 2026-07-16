@@ -22,12 +22,6 @@ const categoryFilter = document.getElementById("categoryFilter");
 
 const STORAGE_KEY = "notiontoanki.categories.v1";
 const ASSIGNMENT_KEY = "notiontoanki.assignments.v1";
-const DEFAULT_CATEGORIES = [
-  { id: "fruit", name: "Obst", color: "#ef4444" },
-  { id: "vegetables", name: "Gemüse", color: "#16a34a" },
-  { id: "drinks", name: "Getränke", color: "#2563eb" },
-];
-
 let previewRequest = 0;
 let cards = [];
 let categories = loadCategories();
@@ -464,9 +458,9 @@ function getCategory(id) {
 function loadCategories() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-    return Array.isArray(parsed) && parsed.length ? parsed : DEFAULT_CATEGORIES;
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
-    return DEFAULT_CATEGORIES;
+    return [];
   }
 }
 

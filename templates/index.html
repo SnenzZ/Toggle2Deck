@@ -50,10 +50,10 @@
                             </svg>
                         </div>
 
-                        <div class="upload-text">Upload ZIP</div>
+                        <div class="upload-text">ZIP hochladen</div>
 
                         <div class="upload-hint">
-                            Click or drag ZIP file here
+                            Datei hier ablegen oder auswählen
                         </div>
                     </div>
 
@@ -66,7 +66,7 @@
                                 id="clearAll"
                                 class="clear-all"
                             >
-                                Delete
+                                Entfernen
                             </button>
                         </div>
 
@@ -74,7 +74,7 @@
                     </div>
 
                     <label>
-                        Deck Name
+                        Deck-Name
                         <input
                             name="deck_name"
                             type="text"
@@ -82,23 +82,59 @@
                         />
                     </label>
 
+                    <section id="workspace" class="workspace hidden" aria-labelledby="workspaceTitle">
+                        <div class="workspace-heading">
+                            <div>
+                                <h2 id="workspaceTitle">Karten organisieren</h2>
+                                <p>Karten auf eine Kategorie ziehen. Wenn du beim Ziehen weitere Karten überfährst, werden sie mitgenommen.</p>
+                            </div>
+                            <div class="filter-control">
+                                <label for="categoryFilter">Filter</label>
+                                <select id="categoryFilter" name="category_filter">
+                                    <option value="all">Alle Karten</option>
+                                    <option value="uncategorized">Ohne Kategorie</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="category-layout">
+                            <aside class="category-panel" aria-labelledby="categoryTitle">
+                                <div class="panel-title">
+                                    <h3 id="categoryTitle">Kategorien</h3>
+                                    <span id="categoryCount">0</span>
+                                </div>
+                                <div id="categoryForm" class="category-form">
+                                    <input id="categoryName" type="text" placeholder="z. B. Obst" autocomplete="off" />
+                                    <input id="categoryColor" type="color" value="#0f766e" aria-label="Kategoriefarbe" />
+                                    <button id="addCategory" type="button">Hinzufügen</button>
+                                </div>
+                                <div id="categoryList" class="category-list"></div>
+                            </aside>
+
+                            <section class="card-panel" aria-labelledby="cardListTitle">
+                                <div class="panel-title">
+                                    <h3 id="cardListTitle">Anki-Karten</h3>
+                                    <span id="cardCount"></span>
+                                </div>
+                                <div id="cardRows" class="card-rows"></div>
+                            </section>
+                        </div>
+
+                        <input id="cardColors" name="card_colors" type="hidden" value="{}" />
+                        <input id="cardCategories" name="card_categories" type="hidden" value="{}" />
+                    </section>
+
                     <section id="colorControls" class="color-controls hidden" aria-labelledby="colorTitle">
                         <div class="color-heading">
                             <div>
-                                <h2 id="colorTitle">Kartenfarben</h2>
-                                <p>Die globale Farbe gilt für alle Karten, sofern keine eigene Farbe aktiviert ist.</p>
+                                <h2 id="colorTitle">Exportfarbe</h2>
+                                <p>Diese Farbe gilt für Karten ohne Kategorie.</p>
                             </div>
                             <label class="global-color">
                                 Globale Farbe
                                 <input id="globalColor" name="global_color" type="color" value="#4f8f87" />
                             </label>
                         </div>
-
-                        <details class="card-editor">
-                            <summary><span>Alle Karten</span><span id="cardCount"></span></summary>
-                            <div id="cardRows" class="card-rows"></div>
-                        </details>
-                        <input id="cardColors" name="card_colors" type="hidden" value="{}" />
                     </section>
 
                     <label class="switch-row">
@@ -109,10 +145,10 @@
                         <span class="switch" aria-hidden="true"></span>
                         <span class="switch-copy">
                             <span class="switch-title">
-                                Create cards for nested toggles
+                                Karten aus verschachtelten Toggles erstellen
                             </span>
                             <span class="switch-description">
-                                When off, nested toggles stay only in the parent card.
+                                Wenn deaktiviert, bleiben verschachtelte Toggles in der übergeordneten Karte.
                             </span>
                         </span>
                     </label>
@@ -122,13 +158,13 @@
                     {% endif %}
 
                     <div class="actions">
-                        <button id="submitButton" type="submit">Create APKG</button>
+                        <button id="submitButton" type="submit">APKG erstellen</button>
                     </div>
                 </form>
 
                 <footer>
-                    Expected is a ZIP file with exactly one Notion HTML file and
-                    the associated media folder.
+                    Erwartet wird eine ZIP-Datei mit genau einer Notion-HTML-Datei
+                    und dem zugehörigen Medienordner.
                 </footer>
             </section>
         </main>

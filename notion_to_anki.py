@@ -26,7 +26,7 @@ from bs4.element import NavigableString, Tag
 
 FIELD_SEPARATOR = "\x1f"
 MODEL_NAME = "Notion Toggle Basic Centered"
-MODEL_ID_SEED = "model:notion-toggle-basic:antiarrhythmika-design-v6-deck-title"
+MODEL_ID_SEED = "model:notion-toggle-basic:antiarrhythmika-design-v7-category-label"
 DEFAULT_CARD_COLOR = "#4f8f87"
 COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 CSS = """
@@ -139,7 +139,7 @@ sub, sup { line-height: 0; }
 
 QFMT = '''<div class="card-theme" style="--accent: {{Color}};">
   <div class="topbar"></div>
-  <div class="badge">{{DeckTitle}}</div>
+  <div class="badge">{{CategoryLabel}}</div>
   <div class="label">FRAGE</div>
   <div class="question">{{Front}}</div>
   <div class="hint">Antwort anzeigen</div>
@@ -147,7 +147,7 @@ QFMT = '''<div class="card-theme" style="--accent: {{Color}};">
 
 AFMT = '''<div class="card-theme" style="--accent: {{Color}};">
   <div class="topbar"></div>
-  <div class="badge">{{DeckTitle}}</div>
+  <div class="badge">{{CategoryLabel}}</div>
   <div class="label">FRAGE</div>
   <div class="question compact">{{Front}}</div>
   <hr id="answer">
@@ -168,6 +168,7 @@ class CardData:
     back: str
     source_id: str | None = None
     color: str = DEFAULT_CARD_COLOR
+    category_label: str = ""
 
 
 def normalize_color(value: str | None, fallback: str = DEFAULT_CARD_COLOR) -> str:
@@ -392,6 +393,10 @@ def text_content(markup: str) -> str:
     return BeautifulSoup(markup, "html.parser").get_text(" ", strip=True)
 
 
+def sanitize_field(value: str) -> str:
+    return value.replace(FIELD_SEPARATOR, " ").strip()
+
+
 def write_with_genanki(
     cards: list[CardData],
     media: list[MediaRef],
@@ -421,6 +426,7 @@ def write_with_genanki(
                 {"name": "Back"},
                 {"name": "Color"},
                 {"name": "DeckTitle"},
+                {"name": "CategoryLabel"},
             ],
             templates=[
                 {
@@ -436,7 +442,7 @@ def write_with_genanki(
             deck.add_note(
                 genanki.Note(
                     model=model,
-                    fields=[card.front, card.back, card.color, deck_name],
+                    fields=[card.front, card.back, card.color, deck_name, card.category_label or deck_name],
                 )
             )
 
@@ -662,6 +668,7 @@ def insert_collection(
                 field_def("Back", 1),
                 field_def("Color", 2),
                 field_def("DeckTitle", 3),
+                field_def("CategoryLabel", 4),
             ],
             "tmpls": [
                 {
@@ -735,7 +742,7 @@ def insert_cards(
                 -1,
                 "",
                 FIELD_SEPARATOR.join(
-                    [card.front, card.back, card.color, deck_name]
+                    [card.front, card.back, card.color, deck_name, card.category_label or deck_name]
                 ),
                 front_text,
                 checksum(front_text),
@@ -801,6 +808,7 @@ def convert_html_export(
     include_nested_toggles: bool = False,
     global_color: str = DEFAULT_CARD_COLOR,
     card_colors: dict[int, str] | None = None,
+    card_categories: dict[int, str] | None = None,
 ) -> ConversionResult:
     html_path = html_path.resolve()
     if not html_path.is_file():
@@ -822,8 +830,10 @@ def convert_html_export(
 
     global_color = normalize_color(global_color)
     card_colors = card_colors or {}
+    card_categories = card_categories or {}
     for index, card in enumerate(cards):
         card.color = normalize_color(card_colors.get(index), global_color)
+        card.category_label = sanitize_field(card_categories.get(index) or final_deck_name)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     deck_id = deterministic_id(f"deck:{final_deck_name}")

@@ -59,6 +59,7 @@ def convert() -> Response:
 
     try:
         card_colors = parse_card_colors(request.form.get("card_colors"))
+        card_categories = parse_card_categories(request.form.get("card_categories"))
         upload.save(zip_path)
         extract_export_zip(zip_path, extract_dir)
         html_path = find_single_html_file(extract_dir)
@@ -72,6 +73,7 @@ def convert() -> Response:
             include_nested_toggles=include_nested_toggles,
             global_color=global_color,
             card_colors=card_colors,
+            card_categories=card_categories,
         )
     except Exception as exc:
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -140,6 +142,28 @@ def parse_card_colors(raw_value: str | None) -> dict[int, str]:
             normalized = normalize_color(raw_color, "")
             if normalized:
                 result[index] = normalized
+    return result
+
+
+def parse_card_categories(raw_value: str | None) -> dict[int, str]:
+    if not raw_value:
+        return {}
+    try:
+        payload = json.loads(raw_value)
+    except (TypeError, json.JSONDecodeError):
+        raise ValueError("Ungültige Kartenkategorien.")
+    if not isinstance(payload, dict):
+        raise ValueError("Ungültige Kartenkategorien.")
+    result: dict[int, str] = {}
+    for raw_index, raw_label in payload.items():
+        try:
+            index = int(raw_index)
+        except (TypeError, ValueError):
+            continue
+        if index >= 0 and isinstance(raw_label, str):
+            label = raw_label.strip()
+            if label:
+                result[index] = label[:80]
     return result
 
 

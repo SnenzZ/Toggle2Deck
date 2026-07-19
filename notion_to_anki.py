@@ -342,6 +342,8 @@ def collect_heading_categories(soup: BeautifulSoup) -> dict[int, str]:
     active: dict[int, str] = {}
     for element in soup.find_all(["h1", "h2", "h3", "h4", "details"]):
         if element.name in {"h1", "h2", "h3", "h4"}:
+            if element.find_parent("details") is not None:
+                continue
             level = int(element.name[1])
             label = text_content(str(element)).strip()
             if label:

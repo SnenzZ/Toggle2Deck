@@ -169,6 +169,7 @@ class CardData:
     source_id: str | None = None
     color: str = DEFAULT_CARD_COLOR
     category_label: str = ""
+    heading_category: str = ""
 
 
 def normalize_color(value: str | None, fallback: str = DEFAULT_CARD_COLOR) -> str:
@@ -306,6 +307,7 @@ def extract_cards(
     include_nested_toggles: bool = False,
 ) -> list[CardData]:
     cards: list[CardData] = []
+    headings_by_details = collect_heading_categories(soup)
     for details in soup.find_all("details"):
         if not include_nested_toggles and details.find_parent("details") is not None:
             continue
@@ -323,8 +325,35 @@ def extract_cards(
         back = clean_fragment(back_nodes, resolver, front=False)
 
         if text_content(front) or text_content(back) or "<img" in back:
-            cards.append(CardData(front=front, back=back, source_id=details.get("id")))
+            cards.append(
+                CardData(
+                    front=front,
+                    back=back,
+                    source_id=details.get("id"),
+                    heading_category=headings_by_details.get(id(details), ""),
+                )
+            )
     return cards
+
+
+def collect_heading_categories(soup: BeautifulSoup) -> dict[int, str]:
+    """Map each toggle to the closest active Notion h1/h2/h3 heading above it."""
+    headings: dict[int, str] = {}
+    active: dict[int, str] = {}
+    for element in soup.find_all(["h1", "h2", "h3", "details"]):
+        if element.name in {"h1", "h2", "h3"}:
+            level = int(element.name[1])
+            label = text_content(str(element)).strip()
+            if label:
+                active[level] = label
+            for stale_level in [candidate for candidate in active if candidate > level]:
+                del active[stale_level]
+            continue
+
+        closest_level = max(active, default=0)
+        if closest_level:
+            headings[id(element)] = active[closest_level]
+    return headings
 
 
 def clean_fragment(

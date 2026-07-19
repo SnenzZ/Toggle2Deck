@@ -116,7 +116,18 @@ def preview() -> Response:
             resolver,
             include_nested_toggles=request.form.get("include_nested_toggles") == "on",
         )
-        return jsonify({"cards": [{"index": i, "front": text_content(card.front)} for i, card in enumerate(cards)]})
+        return jsonify(
+            {
+                "cards": [
+                    {
+                        "index": i,
+                        "front": text_content(card.front),
+                        "headingCategory": card.heading_category,
+                    }
+                    for i, card in enumerate(cards)
+                ]
+            }
+        )
     except Exception as exc:
         return jsonify({"error": str(exc)}), 400
     finally:

@@ -13,6 +13,7 @@ const cardCount = document.getElementById("cardCount");
 const cardColors = document.getElementById("cardColors");
 const cardCategories = document.getElementById("cardCategories");
 const nestedToggle = form.elements.include_nested_toggles;
+const headingCategories = document.getElementById("headingCategories");
 const categoryName = document.getElementById("categoryName");
 const categoryColor = document.getElementById("categoryColor");
 const addCategory = document.getElementById("addCategory");
@@ -28,6 +29,8 @@ let categories = loadCategories();
 let assignments = loadAssignments();
 let dragSelection = new Set();
 let dragPreview = null;
+let autoScrollFrame = null;
+let autoScrollDirection = 0;
 
 uploadZone.addEventListener("click", () => fileInput.click());
 
@@ -83,6 +86,9 @@ function addCategoryFromInput() {
 }
 
 categoryFilter.addEventListener("change", renderCards);
+headingCategories.addEventListener("change", () => {
+  if (headingCategories.checked) applyHeadingCategories();
+});
 
 function setFile(file) {
   if (!file.name.toLowerCase().endsWith(".zip")) {
@@ -163,6 +169,7 @@ async function loadPreview() {
     if (requestId !== previewRequest) return;
     cards = payload.cards;
     pruneAssignments();
+    if (headingCategories.checked) applyHeadingCategories({ render: false });
     renderCategories();
     renderCards();
     workspace.classList.remove("hidden");
@@ -318,6 +325,7 @@ function collectDraggedCard(index) {
 function finishCardDrag() {
   document.body.classList.remove("dragging-cards");
   dragSelection = new Set();
+  stopAutoScroll();
   hideDragPreview();
   markDraggedCards();
   for (const item of categoryList.children) item.classList.remove("drop-target");
@@ -372,6 +380,7 @@ function moveDragPreview(event) {
   if (!dragPreview) return;
   dragPreview.style.left = `${event.clientX + 16}px`;
   dragPreview.style.top = `${event.clientY + 16}px`;
+  autoScrollCards(event);
 }
 
 function hideDragPreview() {
@@ -380,6 +389,43 @@ function hideDragPreview() {
 }
 
 document.addEventListener("dragover", moveDragPreview);
+
+function autoScrollCards(event) {
+  if (!document.body.classList.contains("dragging-cards")) return;
+  const bounds = cardRows.getBoundingClientRect();
+  const margin = 72;
+  const maxStep = 18;
+  let direction = 0;
+
+  if (event.clientY > bounds.bottom - margin && cardRows.scrollTop + cardRows.clientHeight < cardRows.scrollHeight) {
+    direction = Math.min(1, (event.clientY - (bounds.bottom - margin)) / margin);
+  } else if (event.clientY < bounds.top + margin && cardRows.scrollTop > 0) {
+    direction = -Math.min(1, ((bounds.top + margin) - event.clientY) / margin);
+  }
+
+  if (!direction) {
+    stopAutoScroll();
+    return;
+  }
+
+  autoScrollDirection = direction * maxStep;
+  if (autoScrollFrame) return;
+  const scroll = () => {
+    if (!autoScrollDirection || !document.body.classList.contains("dragging-cards")) {
+      stopAutoScroll();
+      return;
+    }
+    cardRows.scrollTop += autoScrollDirection;
+    autoScrollFrame = requestAnimationFrame(scroll);
+  };
+  autoScrollFrame = requestAnimationFrame(scroll);
+}
+
+function stopAutoScroll() {
+  autoScrollDirection = 0;
+  if (autoScrollFrame) cancelAnimationFrame(autoScrollFrame);
+  autoScrollFrame = null;
+}
 
 function assignCategory(index, categoryId) {
   if (!categoryId) {
@@ -415,6 +461,44 @@ function deleteCategory(categoryId) {
   persistAssignments();
   renderCategories();
   renderCards();
+}
+
+function applyHeadingCategories(options = {}) {
+  const { render = true } = options;
+  const colorPalette = ["#0f766e", "#2563eb", "#7c3aed", "#b45309", "#be123c", "#475569"];
+  const byName = new Map(categories.map((category) => [normalizeName(category.name), category]));
+  let changedCategories = false;
+  let changedAssignments = false;
+
+  for (const card of cards) {
+    const name = (card.headingCategory || "").trim();
+    if (!name) continue;
+
+    const key = normalizeName(name);
+    let category = byName.get(key);
+    if (!category) {
+      category = {
+        id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${categories.length}`,
+        name,
+        color: colorPalette[categories.length % colorPalette.length],
+      };
+      categories.push(category);
+      byName.set(key, category);
+      changedCategories = true;
+    }
+
+    if (assignments[card.index] !== category.id) {
+      assignments[card.index] = category.id;
+      changedAssignments = true;
+    }
+  }
+
+  if (changedCategories) persistCategories();
+  if (changedAssignments) persistAssignments();
+  if (render && (changedCategories || changedAssignments)) {
+    renderCategories();
+    renderCards();
+  }
 }
 
 function syncExportColors() {
@@ -453,6 +537,10 @@ function pruneAssignments() {
 
 function getCategory(id) {
   return categories.find((category) => category.id === id);
+}
+
+function normalizeName(value) {
+  return value.trim().toLocaleLowerCase("de-DE");
 }
 
 function loadCategories() {

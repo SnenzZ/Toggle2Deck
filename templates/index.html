@@ -153,6 +153,23 @@
                         </span>
                     </label>
 
+                    <label class="switch-row">
+                        <input
+                            id="headingCategories"
+                            name="heading_categories"
+                            type="checkbox"
+                        />
+                        <span class="switch" aria-hidden="true"></span>
+                        <span class="switch-copy">
+                            <span class="switch-title">
+                                Überschriften als Kategorien verwenden
+                            </span>
+                            <span class="switch-description">
+                                H1, H2 und H3 aus Notion werden automatisch den darunterliegenden Karten zugeordnet.
+                            </span>
+                        </span>
+                    </label>
+
                     {% if error %}
                     <p class="error" role="alert">{{ error }}</p>
                     {% endif %}

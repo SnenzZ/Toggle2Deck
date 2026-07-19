@@ -337,11 +337,11 @@ def extract_cards(
 
 
 def collect_heading_categories(soup: BeautifulSoup) -> dict[int, str]:
-    """Map each toggle to the closest active Notion h1/h2/h3 heading above it."""
+    """Map each toggle to the closest active Notion h1/h2/h3/h4 heading above it."""
     headings: dict[int, str] = {}
     active: dict[int, str] = {}
-    for element in soup.find_all(["h1", "h2", "h3", "details"]):
-        if element.name in {"h1", "h2", "h3"}:
+    for element in soup.find_all(["h1", "h2", "h3", "h4", "details"]):
+        if element.name in {"h1", "h2", "h3", "h4"}:
             level = int(element.name[1])
             label = text_content(str(element)).strip()
             if label:

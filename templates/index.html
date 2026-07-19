@@ -86,7 +86,7 @@
                         <div class="workspace-heading">
                             <div>
                                 <h2 id="workspaceTitle">Karten organisieren</h2>
-                                <p>Karten auf eine Kategorie ziehen. Wenn du beim Ziehen weitere Karten überfährst, werden sie mitgenommen.</p>
+                                <p>Karten ziehen, um mehrere zu markieren. Danach auf eine Kategorie klicken, um sie zuzuweisen.</p>
                             </div>
                             <div class="filter-control">
                                 <label for="categoryFilter">Filter</label>
@@ -139,22 +139,6 @@
 
                     <label class="switch-row">
                         <input
-                            name="include_nested_toggles"
-                            type="checkbox"
-                        />
-                        <span class="switch" aria-hidden="true"></span>
-                        <span class="switch-copy">
-                            <span class="switch-title">
-                                Karten aus verschachtelten Toggles erstellen
-                            </span>
-                            <span class="switch-description">
-                                Wenn deaktiviert, bleiben verschachtelte Toggles in der übergeordneten Karte.
-                            </span>
-                        </span>
-                    </label>
-
-                    <label class="switch-row">
-                        <input
                             id="headingCategories"
                             name="heading_categories"
                             type="checkbox"
@@ -165,7 +149,23 @@
                                 Überschriften als Kategorien verwenden
                             </span>
                             <span class="switch-description">
-                                H1, H2 und H3 aus Notion werden automatisch den darunterliegenden Karten zugeordnet.
+                                H1, H2, H3 und H4 aus Notion werden automatisch den darunterliegenden Karten zugeordnet.
+                            </span>
+                        </span>
+                    </label>
+
+                    <label class="switch-row">
+                        <input
+                            name="include_nested_toggles"
+                            type="checkbox"
+                        />
+                        <span class="switch" aria-hidden="true"></span>
+                        <span class="switch-copy">
+                            <span class="switch-title">
+                                Karten aus verschachtelten Toggles erstellen
+                            </span>
+                            <span class="switch-description">
+                                Wenn deaktiviert, bleiben verschachtelte Toggles in der übergeordneten Karte.
                             </span>
                         </span>
                     </label>

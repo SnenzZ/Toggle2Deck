@@ -21,12 +21,14 @@ const categoryList = document.getElementById("categoryList");
 const categoryCount = document.getElementById("categoryCount");
 const categoryFilter = document.getElementById("categoryFilter");
 
-const STORAGE_KEY = "notiontoanki.categories.v1";
-const ASSIGNMENT_KEY = "notiontoanki.assignments.v1";
+const STORAGE_KEY = "notiontoanki.categories.v2";
+const ASSIGNMENT_KEY = "notiontoanki.assignments.v2";
+const AUTO_CATEGORY_SOURCE = "heading";
 let previewRequest = 0;
 let cards = [];
 let categories = loadCategories();
 let assignments = loadAssignments();
+let selectedCards = new Set();
 let dragSelection = new Set();
 let dragPreview = null;
 let autoScrollFrame = null;
@@ -87,7 +89,11 @@ function addCategoryFromInput() {
 
 categoryFilter.addEventListener("change", renderCards);
 headingCategories.addEventListener("change", () => {
-  if (headingCategories.checked) applyHeadingCategories();
+  if (headingCategories.checked) {
+    applyHeadingCategories();
+  } else {
+    removeHeadingCategories();
+  }
 });
 
 function setFile(file) {
@@ -146,6 +152,8 @@ function createFileItem(file) {
 function clearFile() {
   fileInput.value = "";
   cards = [];
+  selectedCards = new Set();
+  dragSelection = new Set();
   renderFile(null);
   workspace.classList.add("hidden");
   colorControls.classList.add("hidden");
@@ -169,6 +177,7 @@ async function loadPreview() {
     if (requestId !== previewRequest) return;
     cards = payload.cards;
     pruneAssignments();
+    pruneSelectedCards();
     if (headingCategories.checked) applyHeadingCategories({ render: false });
     renderCategories();
     renderCards();
@@ -234,6 +243,13 @@ function renderCategories() {
       assignCardsToCategory(indexes, category.id);
       finishCardDrag();
     });
+    item.addEventListener("click", (event) => {
+      if (event.target.closest(".category-actions")) return;
+      if (!selectedCards.size) return;
+      assignCardsToCategory([...selectedCards], category.id);
+      selectedCards = new Set();
+      markSelectedCards();
+    });
     categoryList.append(item);
   }
 
@@ -270,6 +286,10 @@ function createCardRow(card) {
   row.className = "card-row";
   row.draggable = true;
   row.dataset.index = card.index;
+  row.addEventListener("click", (event) => {
+    if (event.target.closest("button, select, input")) return;
+    toggleCardSelection(card.index);
+  });
   row.addEventListener("dragstart", (event) => {
     startCardDrag(event, card.index);
   });
@@ -302,11 +322,14 @@ function createCardRow(card) {
   select.addEventListener("change", () => assignCategory(card.index, select.value));
 
   row.append(front, badge, select);
+  row.classList.toggle("selected-for-drag", selectedCards.has(String(card.index)));
   return row;
 }
 
 function startCardDrag(event, index) {
-  dragSelection = new Set([String(index)]);
+  const key = String(index);
+  dragSelection = selectedCards.has(key) ? new Set(selectedCards) : new Set([key]);
+  selectedCards = new Set(dragSelection);
   event.dataTransfer.setData("text/card-index", String(index));
   event.dataTransfer.effectAllowed = "move";
   setTransparentDragImage(event);
@@ -318,23 +341,44 @@ function startCardDrag(event, index) {
 function collectDraggedCard(index) {
   if (!document.body.classList.contains("dragging-cards")) return;
   dragSelection.add(String(index));
+  selectedCards = new Set(dragSelection);
   markDraggedCards();
   updateDragPreview();
 }
 
 function finishCardDrag() {
   document.body.classList.remove("dragging-cards");
+  selectedCards = new Set(dragSelection);
   dragSelection = new Set();
   stopAutoScroll();
   hideDragPreview();
-  markDraggedCards();
+  markSelectedCards();
   for (const item of categoryList.children) item.classList.remove("drop-target");
 }
 
 function markDraggedCards() {
   for (const row of cardRows.children) {
-    row.classList.toggle("selected-for-drag", dragSelection.has(row.dataset.index));
+    row.classList.toggle(
+      "selected-for-drag",
+      dragSelection.has(row.dataset.index) || selectedCards.has(row.dataset.index),
+    );
   }
+}
+
+function markSelectedCards() {
+  for (const row of cardRows.children) {
+    row.classList.toggle("selected-for-drag", selectedCards.has(row.dataset.index));
+  }
+}
+
+function toggleCardSelection(index) {
+  const key = String(index);
+  if (selectedCards.has(key)) {
+    selectedCards.delete(key);
+  } else {
+    selectedCards.add(key);
+  }
+  markSelectedCards();
 }
 
 function setTransparentDragImage(event) {
@@ -481,6 +525,7 @@ function applyHeadingCategories(options = {}) {
         id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${categories.length}`,
         name,
         color: colorPalette[categories.length % colorPalette.length],
+        source: AUTO_CATEGORY_SOURCE,
       };
       categories.push(category);
       byName.set(key, category);
@@ -499,6 +544,28 @@ function applyHeadingCategories(options = {}) {
     renderCategories();
     renderCards();
   }
+}
+
+function removeHeadingCategories() {
+  const autoIds = new Set(
+    categories
+      .filter((category) => category.source === AUTO_CATEGORY_SOURCE)
+      .map((category) => category.id),
+  );
+  if (!autoIds.size) {
+    renderCategories();
+    renderCards();
+    return;
+  }
+
+  categories = categories.filter((category) => !autoIds.has(category.id));
+  for (const [index, categoryId] of Object.entries(assignments)) {
+    if (autoIds.has(categoryId)) delete assignments[index];
+  }
+  persistCategories();
+  persistAssignments();
+  renderCategories();
+  renderCards();
 }
 
 function syncExportColors() {
@@ -533,6 +600,11 @@ function pruneAssignments() {
     }
   }
   if (changed) persistAssignments();
+}
+
+function pruneSelectedCards() {
+  const validIndexes = new Set(cards.map((card) => String(card.index)));
+  selectedCards = new Set([...selectedCards].filter((index) => validIndexes.has(index)));
 }
 
 function getCategory(id) {
@@ -577,4 +649,8 @@ function formatFileSize(bytes) {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
-renderCategories();
+if (headingCategories.checked) {
+  renderCategories();
+} else {
+  removeHeadingCategories();
+}

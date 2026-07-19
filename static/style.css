@@ -364,6 +364,7 @@ button:hover {
     border-color: var(--line-strong);
 }
 
+.category-chip:hover,
 .category-chip.drop-target {
     border-color: var(--accent);
     background: var(--accent-soft);
